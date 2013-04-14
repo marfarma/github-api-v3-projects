@@ -16,7 +16,7 @@ module Example
     enable :sessions
 
     set :github_options, {
-      :scope        => "user",
+      :scope        => "delete_repo",
       :secret       => CLIENT_SECRET,
       :client_id    => CLIENT_ID,
       :callback_url => "/callback" 
@@ -26,18 +26,39 @@ module Example
 
     get '/' do
       if !authenticated?
-	authenticate!
+      	authenticate!
       else
-    	access_token = github_user["token"]
-	auth_result = RestClient.get("https://api.github.com/user", {
-	  :params => {:access_token => access_token, :accept => :json},
-	  :accept => :json
-	})
-      	
-	auth_result = JSON.parse(auth_result)
+        access_token = github_user["token"]
+      	auth_result = RestClient.get("https://api.github.com/user", {
+      	  :params => {:access_token => access_token, :accept => :json},
+      	  :accept => :json
+      	})
+            	
+      	auth_result = JSON.parse(auth_result)
 
-	erb :advanced, :locals => {:login => auth_result["login"],
-	:hire_status => auth_result["hireable"] ? "hireable" : "not hireable"}
+      	erb :advanced, :locals => {:login => auth_result["login"],
+      	:hire_status => auth_result["hireable"] ? "hireable" : "not hireable"}
+      end
+    end
+
+    get '/repos' do
+      if !authenticated?
+        authenticate!
+      else
+        access_token = github_user["token"]
+        # GET /users/:user/repos
+        auth_result = RestClient.get("https://api.github.com/user/repos", {
+          :params => {:access_token => access_token, :accept => :json, :sort => "updated", :per_page => 100},
+          :accept => :json
+        })
+              
+        auth_result = JSON.parse(auth_result)
+        p auth_result.length
+        repos = Array.new
+        auth_result.each do |repo|
+          repos << repo["name"]
+        end
+        erb :repos, :locals => {:repos => repos} 
       end
     end
 

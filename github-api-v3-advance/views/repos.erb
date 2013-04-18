@@ -5,7 +5,7 @@
     <h1>all your repos</h1>
     <ul>
     	<% repos.each do |repo| %>
-    		<li><%= repo %></li>
+    		<li><%= repo %> <span><a href="/delete?name=<%= repo %>">delete</a></span></li>
     	<% end %>
     </ul>
   </body>

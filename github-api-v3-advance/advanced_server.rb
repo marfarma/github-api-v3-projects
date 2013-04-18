@@ -10,34 +10,63 @@ module Example
     #   CLIENT_SECRET = ENV['GITHUB_CLIENT_SECRET']
     # end
     
-    CLIENT_ID = "23b61613131b4d473eb6"
-    CLIENT_SECRET = "6ef41173e764159d25cf05a20af53eef2260dde8"
+    CLIENT_ID = "6e5d2128179359d8af4f"
+    CLIENT_SECRET = "8491370590272040442911a5565afb8324e32858"
 
     enable :sessions
 
     set :github_options, {
-      :scope        => "delete_repo",
+      :scopes        => "delete_repo",
       :secret       => CLIENT_SECRET,
       :client_id    => CLIENT_ID,
-      :callback_url => "/callback" 
+      :callback_url => "/callback?scope=repo" 
     }
     
     register Sinatra::Auth::Github
 
     get '/' do
       if !authenticated?
-      	authenticate!
+        authenticate!
       else
         access_token = github_user["token"]
-      	auth_result = RestClient.get("https://api.github.com/user", {
-      	  :params => {:access_token => access_token, :accept => :json},
-      	  :accept => :json
-      	})
-            	
-      	auth_result = JSON.parse(auth_result)
+        auth_result = RestClient.get("https://api.github.com/user", {
+          :params => {:access_token => access_token, :accept => :json},
+          :accept => :json
+        })
+              
+        auth_result = JSON.parse(auth_result)
 
-      	erb :advanced, :locals => {:login => auth_result["login"],
-      	:hire_status => auth_result["hireable"] ? "hireable" : "not hireable"}
+        erb :advanced, :locals => {:login => auth_result["login"],
+        :hire_status => auth_result["hireable"] ? "hireable" : "not hireable"}
+      end
+    end
+
+    get '/delete' do
+      if !authenticated?
+        authenticate!
+      else
+        name = params["name"]
+        p name
+        access_token = github_user["token"]
+        # begin
+          https = "https://api.github.com/repos/teddy-ma/#{name}"
+          p "=================================================="
+          p https
+          p access_token
+          auth_result = RestClient.delete(https, {
+            :params => {:access_token => access_token, :accept => :json},
+            :accept => :json
+          })
+        # rescue => e
+        #   e.response
+
+        #   p "---------------------------"
+        #   p e
+        #   p e.response
+        # end     
+        # auth_result = JSON.parse(auth_result)
+
+        redirect '/repos'
       end
     end
 
